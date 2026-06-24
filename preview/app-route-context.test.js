@@ -9,9 +9,10 @@ const assert = require("assert");
 const vm = require("vm");
 
 const appHtml = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
-const appScript = appHtml.match(/<script>([\s\S]*?)<\/script>/)[1];
+const appScript = appHtml.match(/<script>\s*([\s\S]*?)<\/script>\s*<\/body>/)[1];
 const routeContextScript = fs.readFileSync(path.join(__dirname, "app-route-context.js"), "utf8");
 const layoutHandoffScript = fs.readFileSync(path.join(__dirname, "layout-handoff.js"), "utf8");
+const layoutUiScript = fs.readFileSync(path.join(__dirname, "app-layout-handoff-ui.js"), "utf8");
 
 function createElement(tagName) {
   return {
@@ -46,10 +47,13 @@ function makeDocument(hash) {
   const prevStep = createElement("a");
   const nextStep = createElement("a");
   const progress = createElement("span");
+  const layoutSummary = createElement("span");
+  layoutSummary.hidden = true;
   const bySelector = {
     "#rail": rail,
     "#screen": frame,
     "#crumb-label": crumb,
+    "#layout-handoff-summary": layoutSummary,
     "#open-direct": openDirect,
     "#step-count": stepCount,
     "#prev-step": prevStep,
@@ -83,7 +87,7 @@ function makeDocument(hash) {
 
 function runApp(hash) {
   const page = makeDocument(hash);
-  vm.runInNewContext(`${layoutHandoffScript}\n${routeContextScript}\n${appScript}`, {
+  vm.runInNewContext(`${layoutHandoffScript}\n${routeContextScript}\n${layoutUiScript}\n${appScript}`, {
     document: page.document,
     window: page.window,
     sessionStorage: {
